@@ -1,0 +1,51 @@
+{
+  "_args": [
+    [
+      "typeface-lora@0.0.72",
+      "/Users/jmeng/Documents/code/t485"
+    ]
+  ],
+  "_development": true,
+  "_from": "typeface-lora@0.0.72",
+  "_id": "typeface-lora@0.0.72",
+  "_inBundle": false,
+  "_integrity": "sha512-6Q029hpZAJOU2K0V3JM0xColUa/u/0xpzgN5nv1aKe019lNYp9u+6u+BF3zK7n+gwGAjrz75qdFxhM34fheSAA==",
+  "_location": "/typeface-lora",
+  "_phantomChildren": {},
+  "_requested": {
+    "type": "version",
+    "registry": true,
+    "raw": "typeface-lora@0.0.72",
+    "name": "typeface-lora",
+    "escapedName": "typeface-lora",
+    "rawSpec": "0.0.72",
+    "saveSpec": null,
+    "fetchSpec": "0.0.72"
+  },
+  "_requiredBy": [
+    "#DEV:/"
+  ],
+  "_resolved": "https://registry.npmjs.org/typeface-lora/-/typeface-lora-0.0.72.tgz",
+  "_spec": "0.0.72",
+  "_where": "/Users/jmeng/Documents/code/t485",
+  "author": {
+    "name": "Kyle Mathews",
+    "email": "mathews.kyle@gmail.com"
+  },
+  "description": "Lora typeface",
+  "keywords": [
+    "typeface",
+    "font",
+    "font family",
+    "google fonts",
+    "lora"
+  ],
+  "license": "MIT",
+  "main": "index.css",
+  "name": "typeface-lora",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/KyleAMathews/typefaces/tree/master/packages/lora"
+  },
+  "version": "0.0.72"
+}
