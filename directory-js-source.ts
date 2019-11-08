@@ -14,13 +14,15 @@ import URL from "../utils/URL";
 import HTML from "../utils/HTML";
 import "bootstrap";
 import "bootstrap-select";
+import Database from "../server/Database";
 
+let db = new Database();
 
 PageState.init();
 
 const directoryKeymap = [
     ["scout", "firstName"], ["scout", "lastName"], ["scout", "email"], ["scout", "homePhone"], ["scout", "slack"],
-    ["scout", "jobA"], ["scout", "jobB"], ["scout", "joinDate"], ["scout", "active"], ["scout", "WFATrained"],
+    ["scout", "jobA"], ["scout", "jobB"], ["scout", "school"], ["scout", "classOf"], ["scout", "joinDate"], ["scout", "active"], ["scout", "WFATrained"],
     ["scout", "cellPhone"],
     ["father", "firstName"], ["father", "lastName"], ["father", "cellPhone"], ["father", "email"], ["father", "slack"],
     ["mother", "firstName"], ["mother", "lastName"], ["mother", "cellPhone"], ["mother", "email"], ["mother", "slack"],
@@ -30,7 +32,7 @@ const directoryKeymap = [
  */
 const columnKeymap = [
     [["Scout\'s First Name"], ["Scout\'s Last Name"], ["Patrol"], ["Scout\'s E-mail"], ["Scout\'s Home Phone"], ["Slack Username"],
-        ["Troop Jobs"], ["Date Joined Troop 485", "Join Date"], ["Active (Y)es/ (R)arely/ (A)ged Out/ (N)o", "Active"], ["Wilderness First Aid Trained", "WFA Trained"],
+        ["Troop Jobs"], ["School"], ["Class Of (high school)", "Class Of"], ["Date Joined Troop 485", "Join Date"], ["Active (Y)es/ (R)arely/ (A)ged Out/ (N)o", "Active"], ["Wilderness First Aid Trained", "WFA Trained"],
         ["Scout\'s Cell Phone"]],
     [["Father\'s First Name"], ["Father\'s Last Name"], ["Father\'s Cell Phone"], ["Father\'s E-mail"], ["Father\'s Slack Username or None"]],
     [["Mother\'s First Name"], ["Mother\'s Last Name"], ["Mother\'s Cell Phone"], ["Mother\'s E-mail"], ["Mother\'s Slack Username or None"]],
@@ -44,7 +46,7 @@ const readablePatrolMap = {
     BLOBFISH: "Blobfish",
     HAWK: "Hawks",
 };
-const defaultShown = [[0, 1, 2, 3, 4, 10], [], []];
+const defaultShown = [[0, 1, 2, 3, 4, 12], [], []];
 const defaults = {
     search: "",
     filter: "1",
@@ -156,34 +158,47 @@ function toString(obj: any, italciseUnknown: boolean = true) {
  */
 function getSlackID(username: string, slackToken: string) {
     return new Promise(function(resolve, reject) {
+        db.ref("/directory/slackUID/").once("value").then(function(snapshot) {
+            let data = snapshot.val();
+            //Also encodes period
+            let encodedUsername = encodeURIComponent(username).replace(/\./g, "%2E");
+            console.log(encodedUsername, data);
+            if (data != null && data[encodedUsername] != null && data[encodedUsername] != undefined) {
+                resolve(data[encodedUsername]);
+                return;
+            } else {
+                $.ajax({
+                    url: `https://slack.com/api/users.list?token=${slackToken}`,
+                    method: "GET",
+                    dataType: "json",
+                }).done(function(userlistdata) {
+                    let userlist = userlistdata.members;
+                    let updates = {};
+                    let displayName: string;
+                    for (let i = 0; i < userlist.length; i++) {
+                        if (userlist[i].deleted) {
+                            continue;
+                        }
+                        if (userlist[i].profile.display_name != "" && userlist[i].profile.display_name != undefined) {
+                            displayName = userlist[i].profile.display_name;
+                        } else {
+                            displayName = userlist[i].profile.real_name;
+                        }
 
-        $.ajax({
-            url: `https://slack.com/api/users.list?token=${slackToken}`,
-            method: "GET",
-            dataType: "json",
-        }).done(function(userlistdata) {
-            let userlist = userlistdata.members;
-            let updates = {};
-            let displayName: string;
-            for (let i = 0; i < userlist.length; i++) {
-                if (userlist[i].deleted) {
-                    continue;
-                }
-                if (userlist[i].profile.display_name != "" && userlist[i].profile.display_name != undefined) {
-                    displayName = userlist[i].profile.display_name;
-                } else {
-                    displayName = userlist[i].profile.real_name;
-                }
-
-                updates[encodeURIComponent(displayName).replace(/\./g, "%2E")] = userlist[i].id;
-                if (displayName == username) {
-                    resolve(userlist[i].id);
-                }
+                        updates[encodeURIComponent(displayName).replace(/\./g, "%2E")] = userlist[i].id;
+                        if (displayName == username) {
+                            resolve(userlist[i].id);
+                        }
+                    }
+                    db.ref("/directory/slackUID/").update(updates);
+                }).fail(function(err) {
+                    console.log(err);
+                    reject("AJAX Error");
+                });
             }
-        }).fail(function(err) {
-            reject("AJAX Error");
+        }).catch(function(err) {
+            reject("Firebase Error");
         });
-
     });
 }
 
@@ -274,9 +289,10 @@ function loadData(password: string, callback: (list: List) => void) {
             $(".directoryLoadTime").text((end - start) + "ms");
             $(".directoryLoaded-show").removeClass("hidden");
 
-            localStorage.setItem("directoryCache", btoa(JSON.stringify(data)));
+            localStorage.setItem("directoryCache", btoa(encodeURIComponent(JSON.stringify(data))));
 
             $(".list tr").click(function() {
+                console.log(1)
                 let id = $(this).attr("data-id");
                 let scout = directory.getScouts()[id];
                 let val: string;
@@ -343,7 +359,7 @@ function loadData(password: string, callback: (list: List) => void) {
                             + directoryKeymap[i][1].substring(1)).html(val);
 
                 }
-
+                console.log(2)
                 $(".infoModal-scoutPatrol").text(readablePatrolMap[scout.patrol]);
 
                 $(".infoModal-scoutJobs").text((!!scout.jobs || scout.jobs.length < 1) ? scout.jobs.join(", ") : "<i>None</i>");
@@ -368,6 +384,8 @@ function loadData(password: string, callback: (list: List) => void) {
                     download(scout.firstName + scout.lastName + ".vcf", scout.export());
                 });
                 $(".infoModal-editLink").attr("href", `https://docs.google.com/spreadsheets/d/${editId}/edit`);
+                console.log(3)
+
                 $("#infoModal").modal("show");
 
                 window.location.hash = id;
@@ -383,7 +401,7 @@ function loadData(password: string, callback: (list: List) => void) {
 
     let cache = localStorage.getItem("directoryCache");
     if (cache != null) {
-        cache = JSON.parse(atob(cache));
+        cache = JSON.parse(decodeURIComponent(atob(cache)));
         load(cache);
     } else {
         load(null);
