@@ -289,7 +289,7 @@ function loadData(password: string, callback: (list: List) => void) {
             $(".directoryLoadTime").text((end - start) + "ms");
             $(".directoryLoaded-show").removeClass("hidden");
 
-            localStorage.setItem("directoryCache", btoa(encodeURIComponent(JSON.stringify(data))));
+            //localStorage.setItem("directoryCache", btoa(encodeURIComponent(JSON.stringify(data))));
 
             $(".list tr").click(function() {
                 console.log(1)
@@ -399,13 +399,13 @@ function loadData(password: string, callback: (list: List) => void) {
     };
 
 
-    let cache = localStorage.getItem("directoryCache");
-    if (cache != null) {
-        cache = JSON.parse(decodeURIComponent(atob(cache)));
-        load(cache);
-    } else {
+    //let cache = localStorage.getItem("directoryCache");
+    //if (cache != null) {
+    //    cache = JSON.parse(decodeURIComponent(atob(cache)));
+    //    load(cache);
+    //} else {
         load(null);
-    }
+    //}
 
 }
 
